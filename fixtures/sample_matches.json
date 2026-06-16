@@ -1,0 +1,115 @@
+{
+  "accounts": {
+    "SamplePlayer#NA1": {
+      "puuid": "FIXTURE-PUUID-0001",
+      "game_name": "SamplePlayer",
+      "tag_line": "NA1"
+    }
+  },
+  "matches_by_puuid": {
+    "FIXTURE-PUUID-0001": [
+      {
+        "match_id": "NA1_FIX_0006",
+        "game_creation": 1717900000000,
+        "game_duration": 1980,
+        "queue_id": 420,
+        "participant": {
+          "puuid": "FIXTURE-PUUID-0001",
+          "champion": "Ahri",
+          "win": true,
+          "kills": 9, "deaths": 3, "assists": 7,
+          "total_minions_killed": 231,
+          "neutral_minions_killed": 18,
+          "gold_earned": 14210,
+          "vision_score": 28,
+          "team_kills": 30
+        }
+      },
+      {
+        "match_id": "NA1_FIX_0005",
+        "game_creation": 1717800000000,
+        "game_duration": 1620,
+        "queue_id": 420,
+        "participant": {
+          "puuid": "FIXTURE-PUUID-0001",
+          "champion": "Orianna",
+          "win": false,
+          "kills": 4, "deaths": 6, "assists": 5,
+          "total_minions_killed": 178,
+          "neutral_minions_killed": 6,
+          "gold_earned": 10350,
+          "vision_score": 19,
+          "team_kills": 22
+        }
+      },
+      {
+        "match_id": "NA1_FIX_0004",
+        "game_creation": 1717700000000,
+        "game_duration": 2280,
+        "queue_id": 420,
+        "participant": {
+          "puuid": "FIXTURE-PUUID-0001",
+          "champion": "Syndra",
+          "win": true,
+          "kills": 12, "deaths": 2, "assists": 9,
+          "total_minions_killed": 289,
+          "neutral_minions_killed": 24,
+          "gold_earned": 17640,
+          "vision_score": 35,
+          "team_kills": 35
+        }
+      },
+      {
+        "match_id": "NA1_FIX_0003",
+        "game_creation": 1717600000000,
+        "game_duration": 1500,
+        "queue_id": 420,
+        "participant": {
+          "puuid": "FIXTURE-PUUID-0001",
+          "champion": "Ahri",
+          "win": false,
+          "kills": 3, "deaths": 7, "assists": 4,
+          "total_minions_killed": 152,
+          "neutral_minions_killed": 4,
+          "gold_earned": 9120,
+          "vision_score": 16,
+          "team_kills": 18
+        }
+      },
+      {
+        "match_id": "NA1_FIX_0002",
+        "game_creation": 1717500000000,
+        "game_duration": 2100,
+        "queue_id": 420,
+        "participant": {
+          "puuid": "FIXTURE-PUUID-0001",
+          "champion": "Viktor",
+          "win": true,
+          "kills": 7, "deaths": 4, "assists": 11,
+          "total_minions_killed": 263,
+          "neutral_minions_killed": 12,
+          "gold_earned": 15030,
+          "vision_score": 31,
+          "team_kills": 28
+        }
+      },
+      {
+        "match_id": "NA1_FIX_0001",
+        "game_creation": 1717400000000,
+        "game_duration": 1740,
+        "queue_id": 420,
+        "participant": {
+          "puuid": "FIXTURE-PUUID-0001",
+          "champion": "Lux",
+          "win": true,
+          "kills": 6, "deaths": 5, "assists": 14,
+          "total_minions_killed": 168,
+          "neutral_minions_killed": 0,
+          "gold_earned": 11890,
+          "vision_score": 42,
+          "team_kills": 30
+        }
+      }
+    ]
+  }
+}
