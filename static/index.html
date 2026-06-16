@@ -4,124 +4,774 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LoL Analytics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; line-height: 1.6; }
-    .row { display: flex; gap: 8px; }
-    input { flex: 1; padding: 8px 10px; font-size: 15px; }
-    button { padding: 8px 14px; font-size: 15px; cursor: pointer; }
-    .metric { border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
-    .value { font-size: 28px; font-weight: 600; }
-    .todo { color: #b8860b; }
-    .games { color: #666; font-size: 14px; }
-    .status { color: #666; font-size: 14px; }
-    pre { background: #f5f5f5; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
-    .coach { border: 1px solid #cde; background: #f3f8ff; border-radius: 8px; padding: 12px 16px; margin: 12px 0; white-space: pre-wrap; }
-    .coach h3 { margin: 0 0 6px; }
-    .grounded { color: #2e7d32; font-size: 13px; }
+    /* ── dpm.lol-inspired tokens ─────────────────────────────────────────── */
+    :root {
+      --bg: #09090b;
+      --bg-elevated: #111114;
+      --bg-card: #16161b;
+      --bg-input: #1c1c22;
+      --border: rgba(255, 255, 255, 0.07);
+      --border-hover: rgba(255, 255, 255, 0.14);
+      --text: #fafafa;
+      --text-muted: #71717a;
+      --text-dim: #52525b;
+      --accent: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --accent-glow: rgba(139, 92, 246, 0.35);
+      --accent-soft: rgba(139, 92, 246, 0.12);
+      --success: #22c55e;
+      --success-soft: rgba(34, 197, 94, 0.12);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.12);
+      --radius: 14px;
+      --radius-pill: 999px;
+      --font: "Inter", system-ui, -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Aurora background (dpm-style depth) */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(139, 92, 246, 0.18), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 80% 0%, rgba(59, 130, 246, 0.08), transparent 50%),
+        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(139, 92, 246, 0.06), transparent 50%);
+    }
+
+    .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Header ──────────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(9, 9, 11, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: white;
+      position: relative;
+    }
+
+    .logo-mark::after {
+      content: "";
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 2px;
+    }
+
+    .logo-text { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
+
+    .header-search {
+      flex: 1;
+      max-width: 420px;
+      margin: 0 24px;
+      position: relative;
+    }
+
+    .header-search svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .header-search input {
+      width: 100%;
+      padding: 10px 44px 10px 40px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .header-search input::placeholder { color: var(--text-dim); }
+
+    .header-search input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .kbd {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--text-dim);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 6px;
+      pointer-events: none;
+    }
+
+    .menu-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .menu-btn:hover { background: var(--bg-card); color: var(--text); }
+
+    /* ── Hero (empty state) ──────────────────────────────────────────────── */
+    .hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px 80px;
+      text-align: center;
+    }
+
+    .hero.hidden { display: none; }
+
+    .hero-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .hero-title .line { display: block; }
+
+    .hero-badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 6px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .hero-search {
+      margin-top: 40px;
+      width: min(480px, 100%);
+      position: relative;
+    }
+
+    .hero-search svg {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+    }
+
+    .hero-search input {
+      width: 100%;
+      padding: 16px 120px 16px 48px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      color: var(--text);
+      font: inherit;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .hero-search input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .hero-search .btn-search {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 10px 20px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-pill);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .hero-search .btn-search:hover { background: var(--accent-hover); }
+    .hero-search .btn-search:active { transform: translateY(-50%) scale(0.98); }
+    .hero-search .btn-search:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .hero-hint {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .hero-hint code {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ── Results panel ───────────────────────────────────────────────────── */
+    .results {
+      display: none;
+      flex: 1;
+      padding: 32px 24px 64px;
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .results.visible { display: block; }
+
+    /* Player header card */
+    .player-card {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, var(--bg-card) 60%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .player-info { display: flex; align-items: center; gap: 16px; }
+
+    .avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 800;
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .player-name {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .player-name .tag { color: var(--text-muted); font-weight: 500; }
+
+    .player-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .player-meta .dot { margin: 0 6px; opacity: 0.4; }
+
+    .player-actions { display: flex; gap: 10px; }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--text);
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .btn:hover { border-color: var(--border-hover); background: var(--bg-card); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: transparent;
+      color: white;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); border-color: transparent; }
+
+    /* Section title */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .stat-value.good { color: var(--success); }
+    .stat-value.warn { color: #eab308; }
+    .stat-value.muted { color: var(--text-muted); font-size: 14px; font-weight: 500; }
+
+    /* Per-game breakdown */
+    .breakdown {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
+    .breakdown summary {
+      padding: 14px 18px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .breakdown summary::-webkit-details-marker { display: none; }
+
+    .breakdown summary::after {
+      content: "▾";
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .breakdown[open] summary::after { transform: rotate(180deg); }
+
+    .breakdown table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .breakdown th {
+      text-align: left;
+      padding: 10px 18px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+      background: var(--bg-elevated);
+    }
+
+    .breakdown td {
+      padding: 10px 18px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .breakdown td:first-child { color: var(--text); font-weight: 500; }
+
+    /* Coaching panel */
+    .coach-panel {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, var(--bg-card) 50%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+    }
+
+    .coach-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .coach-title {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .coach-title svg { color: var(--accent); }
+
+    .grounded-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+    }
+
+    .grounded-badge.ok {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .grounded-badge.bad {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .coach-text {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+    }
+
+    .coach-empty {
+      font-size: 14px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* Loading overlay */
+    .loading-bar {
+      display: none;
+      height: 2px;
+      background: var(--bg-elevated);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+    }
+
+    .loading-bar.active { display: block; }
+
+    .loading-bar::after {
+      content: "";
+      display: block;
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: shimmer 1.2s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+
+    .status-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 200;
+      white-space: nowrap;
+    }
+
+    .status-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .status-toast.error { border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+
+    /* Error state */
+    .error-card {
+      background: var(--danger-soft);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      font-size: 14px;
+      color: #fca5a5;
+      margin-bottom: 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .header-search { display: none; }
+      .player-card { flex-direction: column; align-items: flex-start; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-title { font-size: 2.2rem; }
+    }
   </style>
 </head>
 <body>
-  <h1>LoL Analytics</h1>
-  <p>Search any player by Riot ID (e.g. <code>SamplePlayer#NA1</code> in fixtures mode).</p>
-  <div class="row">
-    <input id="riotId" placeholder="GameName#TAG" value="SamplePlayer#NA1" />
-    <button id="search">Search</button>
-    <button id="coach">Coach me</button>
+  <div class="loading-bar" id="loadingBar"></div>
+  <div class="status-toast" id="toast"></div>
+
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <a class="logo" href="/" id="logoLink">
+        <div class="logo-mark">L</div>
+        <span class="logo-text">LoL Analytics</span>
+      </a>
+      <div class="header-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="headerInput" type="text" placeholder="Search Summoner…" autocomplete="off" />
+        <span class="kbd">↵</span>
+      </div>
+      <button class="menu-btn" aria-label="Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Hero (landing) -->
+    <section class="hero" id="hero">
+      <p class="hero-tag">Experience the new era of</p>
+      <h1 class="hero-title">
+        <span class="line">League of</span>
+        <span class="line">Legends</span>
+      </h1>
+      <span class="hero-badge">Analytics</span>
+
+      <div class="hero-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="heroInput" type="text" placeholder="Search Summoner…" value="SamplePlayer#NA1" autocomplete="off" />
+        <button class="btn-search" id="heroSearchBtn">Analyze</button>
+      </div>
+      <p class="hero-hint">Enter a Riot ID like <code>GameName#TAG</code></p>
+    </section>
+
+    <!-- Results -->
+    <main class="results" id="results">
+      <div id="errorBox"></div>
+
+      <div class="player-card" id="playerCard" style="display:none">
+        <div class="player-info">
+          <div class="avatar" id="avatar">?</div>
+          <div>
+            <div class="player-name" id="playerName"></div>
+            <div class="player-meta" id="playerMeta"></div>
+          </div>
+        </div>
+        <div class="player-actions">
+          <button class="btn" id="refreshBtn">Refresh</button>
+          <button class="btn btn-primary" id="coachBtn">
+            <span id="coachBtnLabel">Get Coaching</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="section-label">Performance</p>
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <details class="breakdown" id="breakdown">
+        <summary>Per-game breakdown</summary>
+        <div id="breakdownBody"></div>
+      </details>
+
+      <div class="coach-panel" id="coachPanel" style="display:none">
+        <div class="coach-header">
+          <div class="coach-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+            AI Coaching
+          </div>
+          <span class="grounded-badge ok" id="groundedBadge"></span>
+        </div>
+        <p class="coach-text" id="coachText"></p>
+      </div>
+    </main>
   </div>
-  <p class="status" id="status"></p>
-  <div id="out"></div>
-  <div id="coachOut"></div>
 
   <script>
-    const out = document.getElementById("out");
-    const coachOut = document.getElementById("coachOut");
-    const statusEl = document.getElementById("status");
-    const input = document.getElementById("riotId");
+    /* ── Config ──────────────────────────────────────────────────────────── */
+    const METRIC_META = {
+      cs_per_min:         { label: "CS / min",           fmt: v => v.toFixed(1) },
+      vision_per_min:     { label: "Vision / min",       fmt: v => v.toFixed(2) },
+      gold_per_min:       { label: "Gold / min",         fmt: v => Math.round(v).toLocaleString() },
+      kda:                { label: "KDA",                fmt: v => v.toFixed(2) },
+      kill_participation: { label: "Kill Part.",         fmt: v => (v * 100).toFixed(0) + "%" },
+      win_rate:           { label: "Win Rate",           fmt: v => v.toFixed(1) + "%" },
+    };
 
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    /* ── DOM refs ────────────────────────────────────────────────────────── */
+    const hero          = document.getElementById("hero");
+    const results       = document.getElementById("results");
+    const heroInput     = document.getElementById("heroInput");
+    const headerInput   = document.getElementById("headerInput");
+    const heroSearchBtn = document.getElementById("heroSearchBtn");
+    const loadingBar    = document.getElementById("loadingBar");
+    const toast         = document.getElementById("toast");
+    const statsGrid     = document.getElementById("statsGrid");
+    const playerCard    = document.getElementById("playerCard");
+    const playerName    = document.getElementById("playerName");
+    const playerMeta    = document.getElementById("playerMeta");
+    const avatar        = document.getElementById("avatar");
+    const breakdownBody = document.getElementById("breakdownBody");
+    const coachPanel    = document.getElementById("coachPanel");
+    const coachText     = document.getElementById("coachText");
+    const groundedBadge = document.getElementById("groundedBadge");
+    const errorBox      = document.getElementById("errorBox");
+    const refreshBtn    = document.getElementById("refreshBtn");
+    const coachBtn      = document.getElementById("coachBtn");
+    const coachBtnLabel = document.getElementById("coachBtnLabel");
+    const logoLink      = document.getElementById("logoLink");
 
-    async function search() {
-      const riotId = input.value.trim();
-      out.innerHTML = "";
-      coachOut.innerHTML = "";
-      statusEl.textContent = "Queuing ingest…";
-      try {
-        // 1. Enqueue an ingest job.
-        const res = await fetch("/api/search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ riot_id: riotId }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          statusEl.textContent = "Error: " + (err.detail?.[0]?.msg || err.detail || res.status);
-          return;
-        }
-        const { job_id } = await res.json();
+    let currentRiotId = "";
+    let lastStats = null;
+    let busy = false;
 
-        // 2. Poll the job until it finishes.
-        const status = await pollJob(job_id);
-        if (status === "error") return;
+    /* ── Helpers ─────────────────────────────────────────────────────────── */
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-        // 3. Fetch the computed stats.
-        statusEl.textContent = "Computing stats…";
-        const stats = await (await fetch("/api/stats?riot_id=" + encodeURIComponent(riotId))).json();
-        statusEl.textContent = "";
-        render(stats);
-      } catch (e) {
-        statusEl.textContent = "Error: " + e;
-      }
+    function getInput() {
+      return (headerInput.value || heroInput.value).trim();
     }
 
-    async function pollJob(jobId) {
-      for (let i = 0; i < 40; i++) {
-        const job = await (await fetch("/api/jobs/" + jobId)).json();
-        statusEl.textContent = "Ingest status: " + job.status + "…";
-        if (job.status === "done") return "done";
-        if (job.status === "error") {
-          statusEl.textContent = "Ingest failed: " + job.error;
-          return "error";
-        }
-        await sleep(400);
-      }
-      statusEl.textContent = "Timed out waiting for ingest.";
-      return "error";
+    function syncInputs(value) {
+      heroInput.value = value;
+      headerInput.value = value;
     }
 
-    function render(data) {
-      if (!data.ingested) { out.innerHTML = "<p>" + (data.hint || "Not ingested") + "</p>"; return; }
-      let html = "<h2>" + data.riot_id + "</h2>";
-      html += '<p class="games">Analysed ' + data.games_analysed + " games" +
-              (data.cached ? " (cached)" : "") + "</p>";
-      for (const [name, m] of Object.entries(data.metrics)) {
-        html += '<div class="metric"><div>' + name + "</div>";
-        if (m.value === null) {
-          html += '<div class="value todo">' + (m.status || "—") + "</div>";
-        } else {
-          html += '<div class="value">' + m.value + "</div>";
-        }
-        html += "</div>";
-      }
-      html += "<details><summary>Raw response</summary><pre>" + JSON.stringify(data, null, 2) + "</pre></details>";
-      out.innerHTML = html;
+    function setBusy(on) {
+      busy = on;
+      loadingBar.classList.toggle("active", on);
+      heroSearchBtn.disabled = on;
+      refreshBtn.disabled = on;
+      coachBtn.disabled = on;
     }
 
-    async function getCoaching() {
-      const riotId = input.value.trim();
-      coachOut.innerHTML = "";
-      statusEl.textContent = "Asking the coach…";
-      try {
-        const data = await (await fetch("/api/coach?riot_id=" + encodeURIComponent(riotId))).json();
-        statusEl.textContent = "";
-        if (!data.ingested) { coachOut.innerHTML = "<p>" + (data.hint || "Search first") + "</p>"; return; }
-        const badge = data.grounded
-          ? '<div class="grounded">✓ grounded: every number is backed by the stats</div>'
-          : '<div style="color:#b00">⚠ ungrounded numbers detected</div>';
-        coachOut.innerHTML = '<div class="coach"><h3>Coaching</h3>' +
-          escapeHtml(data.feedback) + "</div>" + badge;
-      } catch (e) {
-        statusEl.textContent = "Error: " + e;
-      }
+    function showToast(msg, isError = false) {
+      toast.textContent = msg;
+      toast.classList.toggle("error", isError);
+      toast.classList.add("visible");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove("visible"), 3500);
+    }
+
+    function parseRiotId(riotId) {
+      const i = riotId.indexOf("#");
+      if (i === -1) return { name: riotId, tag: "" };
+      return { name: riotId.slice(0, i), tag: riotId.slice(i) };
+    }
+
+    function statClass(key, value) {
+      if (key === "win_rate") return value >= 55 ? "good" : value <= 45 ? "warn" : "";
+      if (key === "kda") return value >= 3 ? "good" : value < 2 ? "warn" : "";
+      return "";
     }
 
     function escapeHtml(s) {
@@ -130,9 +780,192 @@
       return d.innerHTML;
     }
 
-    document.getElementById("search").addEventListener("click", search);
-    document.getElementById("coach").addEventListener("click", getCoaching);
-    input.addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+    /* ── API calls ───────────────────────────────────────────────────────── */
+    async function pollJob(jobId) {
+      for (let i = 0; i < 50; i++) {
+        const job = await (await fetch("/api/jobs/" + jobId)).json();
+        showToast("Fetching matches… " + job.status);
+        if (job.status === "done") return true;
+        if (job.status === "error") throw new Error(job.error || "Ingest failed");
+        await sleep(400);
+      }
+      throw new Error("Timed out waiting for ingest");
+    }
+
+    async function fetchStats(riotId) {
+      // URLSearchParams so '#' in the tag is encoded correctly, not treated as a fragment.
+      const url = "/api/stats?" + new URLSearchParams({ riot_id: riotId });
+      const data = await (await fetch(url)).json();
+      if (!data.ingested) throw new Error(data.hint || "Player not found — search first");
+      return data;
+    }
+
+    async function fetchCoach(riotId) {
+      const url = "/api/coach?" + new URLSearchParams({ riot_id: riotId });
+      const data = await (await fetch(url)).json();
+      if (!data.ingested) throw new Error(data.hint || "Search first");
+      return data;
+    }
+
+    /* ── Render ──────────────────────────────────────────────────────────── */
+    function showResults() {
+      hero.classList.add("hidden");
+      results.classList.add("visible");
+    }
+
+    function showHero() {
+      hero.classList.remove("hidden");
+      results.classList.remove("visible");
+      errorBox.innerHTML = "";
+      coachPanel.style.display = "none";
+    }
+
+    function renderPlayer(data) {
+      const { name, tag } = parseRiotId(data.riot_id);
+      avatar.textContent = name.charAt(0).toUpperCase();
+      playerName.innerHTML = escapeHtml(name) + '<span class="tag">' + escapeHtml(tag) + "</span>";
+      playerMeta.innerHTML =
+        data.games_analysed + " games analysed" +
+        (data.cached ? '<span class="dot">·</span>cached' : "");
+      playerCard.style.display = "";
+    }
+
+    function renderStats(data) {
+      statsGrid.innerHTML = "";
+      for (const [key, metric] of Object.entries(data.metrics)) {
+        const meta = METRIC_META[key] || { label: key, fmt: v => v };
+        const card = document.createElement("div");
+        card.className = "stat-card";
+        if (metric.value === null) {
+          card.innerHTML =
+            '<div class="stat-label">' + escapeHtml(meta.label) + '</div>' +
+            '<div class="stat-value muted">' + escapeHtml(metric.status || "—") + "</div>";
+        } else {
+          const cls = statClass(key, metric.value);
+          card.innerHTML =
+            '<div class="stat-label">' + escapeHtml(meta.label) + '</div>' +
+            '<div class="stat-value' + (cls ? " " + cls : "") + '">' +
+            escapeHtml(meta.fmt(metric.value)) + "</div>";
+        }
+        statsGrid.appendChild(card);
+      }
+
+      // Per-game table (first metric with per_game data as columns)
+      const keys = Object.keys(data.metrics).filter(k => data.metrics[k].value !== null);
+      if (keys.length === 0) { breakdownBody.innerHTML = ""; return; }
+
+      const matchIds = data.metrics[keys[0]].per_game.map(p => p.match_id);
+      let html = "<table><thead><tr><th>Match</th>";
+      for (const k of keys) html += "<th>" + escapeHtml(METRIC_META[k]?.label || k) + "</th>";
+      html += "</tr></thead><tbody>";
+      for (let i = 0; i < matchIds.length; i++) {
+        html += "<tr><td>" + escapeHtml(matchIds[i]) + "</td>";
+        for (const k of keys) {
+          const pg = data.metrics[k].per_game[i];
+          const v = pg ? (METRIC_META[k]?.fmt(pg.value) ?? pg.value) : "—";
+          html += "<td>" + escapeHtml(String(v)) + "</td>";
+        }
+        html += "</tr>";
+      }
+      html += "</tbody></table>";
+      breakdownBody.innerHTML = html;
+    }
+
+    function renderCoach(data) {
+      coachPanel.style.display = "";
+      coachText.textContent = data.feedback;
+      if (data.grounded) {
+        groundedBadge.className = "grounded-badge ok";
+        groundedBadge.textContent = "✓ Grounded";
+      } else {
+        groundedBadge.className = "grounded-badge bad";
+        groundedBadge.textContent = "⚠ Ungrounded";
+      }
+    }
+
+    /* ── Main flows ──────────────────────────────────────────────────────── */
+    async function analyze(riotId) {
+      if (busy) return;
+      riotId = riotId.trim();
+      if (!riotId || !riotId.includes("#")) {
+        showToast("Enter a valid Riot ID (GameName#TAG)", true);
+        return;
+      }
+
+      currentRiotId = riotId;
+      syncInputs(riotId);
+      setBusy(true);
+      errorBox.innerHTML = "";
+      coachPanel.style.display = "none";
+      showResults();
+      showToast("Queuing ingest…");
+
+      try {
+        const res = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ riot_id: riotId }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          const msg = err.detail?.[0]?.msg || err.detail || "Search failed";
+          throw new Error(msg);
+        }
+        const { job_id } = await res.json();
+        await pollJob(job_id);
+
+        showToast("Computing stats…");
+        lastStats = await fetchStats(riotId);
+        renderPlayer(lastStats);
+        renderStats(lastStats);
+        showToast("Done");
+      } catch (e) {
+        errorBox.innerHTML = '<div class="error-card">' + escapeHtml(String(e.message || e)) + "</div>";
+        showToast(String(e.message || e), true);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function getCoaching() {
+      if (busy || !currentRiotId) return;
+      setBusy(true);
+      coachBtnLabel.textContent = "Loading…";
+      showToast("Generating coaching…");
+      try {
+        const data = await fetchCoach(currentRiotId);
+        renderCoach(data);
+        showToast("Coaching ready");
+      } catch (e) {
+        showToast(String(e.message || e), true);
+      } finally {
+        coachBtnLabel.textContent = "Get Coaching";
+        setBusy(false);
+      }
+    }
+
+    /* ── Events ──────────────────────────────────────────────────────────── */
+    heroSearchBtn.addEventListener("click", () => analyze(heroInput.value));
+    refreshBtn.addEventListener("click", () => analyze(currentRiotId));
+    coachBtn.addEventListener("click", getCoaching);
+    logoLink.addEventListener("click", e => { e.preventDefault(); showHero(); });
+
+    function onEnter(input) {
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") analyze(input.value);
+      });
+      input.addEventListener("input", () => syncInputs(input.value));
+    }
+    onEnter(heroInput);
+    onEnter(headerInput);
+
+    // Ctrl+K / Cmd+K focuses search (dpm.lol shortcut)
+    document.addEventListener("keydown", e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        (results.classList.contains("visible") ? headerInput : heroInput).focus();
+      }
+    });
   </script>
 </body>
 </html>
