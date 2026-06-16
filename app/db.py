@@ -17,7 +17,7 @@ class Base(DeclarativeBase):
     """All ORM models inherit from this."""
 
 
-engine = create_engine(settings.database_url, echo=False, future=True)
+engine = create_engine(settings.database_url, echo=False, future=True, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
