@@ -2,7 +2,7 @@
 
 A League of Legends analytics platform built as a portfolio project. It pulls a player's recent matches from the Riot API, stores them in Postgres, computes performance metrics, and produces grounded LLM coaching feedback.
 
-**Live demo:** *(link once deployed)*
+**Live demo:** https://lol-analytics-mu0k.onrender.com
 
 ---
 
